@@ -65,6 +65,7 @@ FILES_TO_COPY=(
     "README.md"
     "INSTALL.md"
     "CHANGELOG.md"
+    "TROUBLESHOOTING.md"
 )
 
 # Copy files
