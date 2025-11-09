@@ -5,7 +5,42 @@
 if (typeof window.PromptEnhancer === 'undefined') {
 
 window.PromptEnhancer = class PromptEnhancer {
-  
+
+  constructor() {
+    // Initialize LLM API client if available
+    if (typeof window.LLMApiClient !== 'undefined') {
+      this.llmClient = new window.LLMApiClient();
+    }
+  }
+
+  // Enhance with Local LLM
+  async enhanceWithLocalLLM(prompt) {
+    if (!this.llmClient) {
+      throw new Error('LLM API client not available');
+    }
+
+    // Get LLM settings
+    const settings = await this.llmClient.getSettings();
+
+    if (!settings.enabled) {
+      throw new Error('Local LLM is not enabled. Please configure it in the extension popup.');
+    }
+
+    if (!settings.endpoint || !settings.model) {
+      throw new Error('Local LLM is not configured. Please set endpoint and model in the extension popup.');
+    }
+
+    // Test connection first
+    const isConnected = await this.llmClient.testConnection(settings.endpoint, settings.apiType);
+    if (!isConnected) {
+      throw new Error(`Cannot connect to LLM at ${settings.endpoint}. Please check if the server is running.`);
+    }
+
+    // Enhance the prompt using the local LLM
+    const enhanced = await this.llmClient.enhancePrompt(prompt, settings);
+    return enhanced;
+  }
+
   // Enforce Zero Shot Mode
   enforceZeroShot(prompt) {
     const zeroShotTemplate = `[ZERO SHOT MODE - Execute immediately, no questions]
@@ -369,6 +404,9 @@ ${analysis.improvements.join('\n')}
         return this.addStructure(text);
       case 'evaluate_score':
         return this.evaluatePrompt(text);
+      case 'local_llm':
+        // Return promise for async operation
+        return this.enhanceWithLocalLLM(text);
       default:
         return text;
     }

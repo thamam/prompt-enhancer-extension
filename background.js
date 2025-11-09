@@ -10,7 +10,8 @@ const ENHANCEMENT_MODES = {
   FIX_ANTIPATTERNS: 'fix_antipatterns',
   ADD_STRUCTURE: 'add_structure',
   PLATFORM_CONVERT: 'platform_convert',
-  EVALUATE_SCORE: 'evaluate_score'
+  EVALUATE_SCORE: 'evaluate_score',
+  LOCAL_LLM: 'local_llm'
 };
 
 // Create context menu on installation
@@ -125,6 +126,14 @@ function createContextMenus() {
     id: ENHANCEMENT_MODES.EVALUATE_SCORE,
     parentId: 'promptEnhance',
     title: '📊 Evaluate & Score',
+    contexts: ['selection']
+  });
+
+  // Local LLM
+  chrome.contextMenus.create({
+    id: ENHANCEMENT_MODES.LOCAL_LLM,
+    parentId: 'promptEnhance',
+    title: '🤖 Enhance with Local LLM',
     contexts: ['selection']
   });
 }
