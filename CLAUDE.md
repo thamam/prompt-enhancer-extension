@@ -18,11 +18,13 @@ This is a Chrome Extension (Manifest V3) that enhances prompts using systematic 
 - Local LLM: `enhanceWithLocalLLM()` - Async enhancement using local LLM API
 - Entry point: `enhance(mode, prompt)` - Routes to appropriate enhancement method
 
-**LLMApiClient** (`llm-api.js`): Client for local LLM communication
-- Supports Ollama and OpenAI-compatible APIs (LM Studio, LocalAI)
-- Connection testing and model discovery
+**LLMApiClient** (`llm-api.js`): Client for local and remote LLM communication
+- **Local LLMs**: Ollama, LM Studio, LocalAI
+- **Remote APIs**: OpenAI, Anthropic (Claude), Google (Gemini), OpenRouter
+- Connection testing and validation
 - Settings management via chrome.storage
-- Configurable endpoint, model, and temperature
+- API key secure storage for remote providers
+- Configurable endpoint, model, provider, and temperature
 
 **Message Flow**:
 1. User right-clicks selected text → `background.js` creates context menu
@@ -163,35 +165,68 @@ prompt-enhancer-extension/
 - Tested platforms: ChatGPT, Claude.ai, Poe, Perplexity, Bard/Gemini, HuggingChat
 - Supports: textareas, inputs, contentEditable, CodeMirror, Monaco editors
 
-## Local LLM Configuration (v1.3.0+)
+## LLM Configuration (v1.3.0+, Remote APIs v1.4.0+)
 
-### Supported LLM Backends
+### Supported LLM Providers
+
+#### Local LLMs (No API key required)
 - **Ollama**: Default endpoint `http://localhost:11434`
+  - Models: llama2, mistral, codellama, etc.
 - **LM Studio**: OpenAI-compatible, typically `http://localhost:1234`
+  - Any model supported by LM Studio
 - **LocalAI**: OpenAI-compatible
-- Any OpenAI-compatible API server
+  - Custom local models
+
+#### Remote APIs (API key required)
+- **OpenAI**: `https://api.openai.com`
+  - Models: gpt-4, gpt-4-turbo, gpt-3.5-turbo
+  - API key format: `sk-...`
+- **Anthropic (Claude)**: `https://api.anthropic.com`
+  - Models: claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307
+  - API key format: `sk-ant-...`
+- **Google (Gemini)**: `https://generativelanguage.googleapis.com`
+  - Models: gemini-pro, gemini-1.5-pro, gemini-1.5-flash
+  - Uses Google AI API key
+- **OpenRouter**: `https://openrouter.ai`
+  - Models: openai/gpt-4, anthropic/claude-3-opus, google/gemini-pro, and more
+  - Unified access to multiple providers
 
 ### Configuration Steps
+
+#### For Local LLMs:
 1. Click extension icon to open popup
-2. Enable "Enable Local LLM" checkbox
-3. Select API type (Ollama or OpenAI-compatible)
-4. Enter endpoint URL (e.g., `http://localhost:11434`)
-5. Enter model name (e.g., `llama2`, `mistral`, `codellama`)
+2. Enable "Enable LLM Enhancement" checkbox
+3. Select Provider: "Local (Ollama, LM Studio)"
+4. Select Local API Type (Ollama or OpenAI-compatible)
+5. Enter endpoint URL (e.g., `http://localhost:11434`)
+6. Enter model name (e.g., `llama2`, `mistral`)
+7. Click "Test Connection" to verify
+8. Click "Save Settings"
+
+#### For Remote APIs:
+1. Click extension icon to open popup
+2. Enable "Enable LLM Enhancement" checkbox
+3. Select Provider (OpenAI, Anthropic, Google, or OpenRouter)
+4. Enter your API key (kept secure in browser storage)
+5. Enter model name (see examples in UI)
 6. Click "Test Connection" to verify
 7. Click "Save Settings"
 
-### Using Local LLM Enhancement
+### Using LLM Enhancement
 1. Select text on any webpage
-2. Right-click → "Prompt Enhance" → "🤖 Enhance with Local LLM"
+2. Right-click → "Prompt Enhance" → "🤖 Enhance with LLM"
 3. Wait for LLM to process (loading notification appears)
 4. Enhanced text replaces selection
 
 ### Implementation Details
-- **Async Enhancement**: `enhanceWithLocalLLM()` returns a Promise
-- **Connection Testing**: Verifies endpoint availability before enhancement
-- **Error Handling**: Clear error messages for connection failures
+- **Async Enhancement**: `enhanceWithLocalLLM()` returns a Promise (works for both local and remote)
+- **Connection Testing**: Verifies endpoint/API key before enhancement
+- **Error Handling**: Clear error messages for connection/auth failures
 - **Settings Storage**: Uses `chrome.storage.local` for persistence
-- **Host Permissions**: Requires `http://localhost/*` and `http://127.0.0.1/*`
+- **API Key Security**: Stored locally in browser extension storage (not transmitted elsewhere)
+- **Host Permissions**:
+  - Local: `http://localhost/*` and `http://127.0.0.1/*`
+  - Remote: `https://api.openai.com/*`, `https://api.anthropic.com/*`, `https://generativelanguage.googleapis.com/*`, `https://openrouter.ai/*`
 
 ### System Prompt
 Default system prompt instructs the LLM to:
@@ -211,3 +246,12 @@ Default system prompt instructs the LLM to:
 **Notification positioning**: Uses fixed positioning (top-right). Some sites with z-index conflicts may hide notifications.
 
 **Local LLM connection fails**: Ensure the LLM server is running and accessible at the configured endpoint. Check firewall settings and CORS if needed.
+
+**Remote API authentication fails**:
+- Verify your API key is correct and has not expired
+- OpenAI keys start with `sk-`
+- Anthropic keys start with `sk-ant-`
+- Check that you have sufficient credits/quota with the provider
+- Ensure your API key has the necessary permissions
+
+**API rate limits**: Remote providers may have rate limits. If you receive rate limit errors, wait a few moments before trying again or consider upgrading your API plan.

@@ -58,7 +58,7 @@ async function performEnhancement(text, mode, isRedacted = false) {
   try {
     // Show loading notification for async operations
     if (mode === 'local_llm') {
-      showNotification('🤖 Enhancing with Local LLM...', 'info');
+      showNotification('🤖 Enhancing with LLM...', 'info');
     }
 
     // Enhance the prompt
@@ -399,7 +399,7 @@ function getModeDisplayName(mode) {
     'fix_antipatterns': 'Anti-Pattern Fixes',
     'add_structure': 'Structure Enhancement',
     'evaluate_score': 'Evaluation & Scoring',
-    'local_llm': 'Local LLM'
+    'local_llm': 'LLM'
   };
   return names[mode] || mode;
 }

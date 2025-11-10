@@ -129,11 +129,11 @@ function createContextMenus() {
     contexts: ['selection']
   });
 
-  // Local LLM
+  // LLM Enhancement (Local or Remote)
   chrome.contextMenus.create({
     id: ENHANCEMENT_MODES.LOCAL_LLM,
     parentId: 'promptEnhance',
-    title: '🤖 Enhance with Local LLM',
+    title: '🤖 Enhance with LLM',
     contexts: ['selection']
   });
 }

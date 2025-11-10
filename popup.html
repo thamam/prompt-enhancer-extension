@@ -179,28 +179,47 @@
     </div>
 
     <div class="section">
-      <h2>🤖 Local LLM Settings</h2>
+      <h2>🤖 LLM Settings</h2>
       <div style="margin-bottom: 12px;">
         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
           <input type="checkbox" id="llmEnabled" style="cursor: pointer;">
-          <span style="font-size: 13px;">Enable Local LLM</span>
+          <span style="font-size: 13px;">Enable LLM Enhancement</span>
         </label>
       </div>
       <div id="llmSettings" style="display: none;">
         <div style="margin-bottom: 8px;">
-          <label style="display: block; font-size: 12px; margin-bottom: 4px; opacity: 0.9;">API Type:</label>
-          <select id="llmApiType" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
-            <option value="ollama">Ollama</option>
-            <option value="openai">OpenAI-compatible (LM Studio, LocalAI)</option>
+          <label style="display: block; font-size: 12px; margin-bottom: 4px; opacity: 0.9;">Provider:</label>
+          <select id="llmProvider" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+            <option value="local">Local (Ollama, LM Studio)</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="google">Google (Gemini)</option>
+            <option value="openrouter">OpenRouter</option>
           </select>
         </div>
-        <div style="margin-bottom: 8px;">
-          <label style="display: block; font-size: 12px; margin-bottom: 4px; opacity: 0.9;">Endpoint URL:</label>
-          <input type="text" id="llmEndpoint" placeholder="http://localhost:11434" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+        <div id="localSettings" style="display: block;">
+          <div style="margin-bottom: 8px;">
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; opacity: 0.9;">Local API Type:</label>
+            <select id="llmApiType" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+              <option value="ollama">Ollama</option>
+              <option value="openai">OpenAI-compatible (LM Studio)</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; opacity: 0.9;">Endpoint URL:</label>
+            <input type="text" id="llmEndpoint" placeholder="http://localhost:11434" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+          </div>
+        </div>
+        <div id="remoteSettings" style="display: none;">
+          <div style="margin-bottom: 8px;">
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; opacity: 0.9;">API Key:</label>
+            <input type="password" id="llmApiKey" placeholder="sk-..." style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+          </div>
         </div>
         <div style="margin-bottom: 8px;">
           <label style="display: block; font-size: 12px; margin-bottom: 4px; opacity: 0.9;">Model Name:</label>
           <input type="text" id="llmModel" placeholder="llama2" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+          <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;" id="modelHint">Examples: gpt-4, claude-3-opus-20240229, gemini-pro</div>
         </div>
         <button class="button" id="testConnection" style="margin-bottom: 8px;">Test Connection</button>
         <button class="button" id="saveSettings">Save Settings</button>
@@ -222,7 +241,7 @@
     <button class="button" id="resetStats">Reset Statistics</button>
 
     <div class="footer">
-      v1.3.0 • Prompt Engineering Project
+      v1.4.0 • Prompt Engineering Project
     </div>
   </div>
 

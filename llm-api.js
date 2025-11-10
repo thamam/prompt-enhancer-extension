@@ -1,5 +1,5 @@
-// Local LLM API Client
-// Supports Ollama, LM Studio, and OpenAI-compatible endpoints
+// LLM API Client
+// Supports local LLMs (Ollama, LM Studio) and remote APIs (OpenAI, Claude, Gemini, OpenRouter)
 
 // Only define if not already defined
 if (typeof window.LLMApiClient === 'undefined') {
@@ -11,9 +11,9 @@ window.LLMApiClient = class LLMApiClient {
   }
 
   /**
-   * Enhance a prompt using a local LLM
+   * Enhance a prompt using local or remote LLM
    * @param {string} prompt - The original prompt to enhance
-   * @param {object} settings - LLM settings (endpoint, model, apiType)
+   * @param {object} settings - LLM settings (endpoint, model, apiType, provider, apiKey)
    * @returns {Promise<string>} - Enhanced prompt
    */
   async enhancePrompt(prompt, settings) {
@@ -21,6 +21,8 @@ window.LLMApiClient = class LLMApiClient {
       endpoint = 'http://localhost:11434',
       model = 'llama2',
       apiType = 'ollama',
+      provider = 'local',
+      apiKey = '',
       temperature = 0.7,
       systemPrompt = this.getDefaultSystemPrompt()
     } = settings;
@@ -28,23 +30,36 @@ window.LLMApiClient = class LLMApiClient {
     try {
       let response;
 
-      if (apiType === 'ollama') {
-        response = await this.callOllama(endpoint, model, prompt, systemPrompt, temperature);
-      } else if (apiType === 'openai') {
-        response = await this.callOpenAI(endpoint, model, prompt, systemPrompt, temperature);
+      // Route to appropriate API based on provider
+      if (provider === 'local') {
+        if (apiType === 'ollama') {
+          response = await this.callOllama(endpoint, model, prompt, systemPrompt, temperature);
+        } else if (apiType === 'openai') {
+          response = await this.callLocalOpenAI(endpoint, model, prompt, systemPrompt, temperature);
+        } else {
+          throw new Error(`Unsupported local API type: ${apiType}`);
+        }
+      } else if (provider === 'openai') {
+        response = await this.callRemoteOpenAI(model, prompt, systemPrompt, temperature, apiKey);
+      } else if (provider === 'anthropic') {
+        response = await this.callAnthropic(model, prompt, systemPrompt, temperature, apiKey);
+      } else if (provider === 'google') {
+        response = await this.callGemini(model, prompt, systemPrompt, temperature, apiKey);
+      } else if (provider === 'openrouter') {
+        response = await this.callOpenRouter(model, prompt, systemPrompt, temperature, apiKey);
       } else {
-        throw new Error(`Unsupported API type: ${apiType}`);
+        throw new Error(`Unsupported provider: ${provider}`);
       }
 
       return response;
     } catch (error) {
       console.error('LLM API error:', error);
-      throw new Error(`Failed to enhance with local LLM: ${error.message}`);
+      throw new Error(`Failed to enhance with LLM: ${error.message}`);
     }
   }
 
   /**
-   * Call Ollama API
+   * Call Ollama API (local)
    */
   async callOllama(endpoint, model, prompt, systemPrompt, temperature) {
     const url = `${endpoint}/api/generate`;
@@ -76,9 +91,9 @@ window.LLMApiClient = class LLMApiClient {
   }
 
   /**
-   * Call OpenAI-compatible API (LM Studio, LocalAI, etc.)
+   * Call local OpenAI-compatible API (LM Studio, LocalAI, etc.)
    */
-  async callOpenAI(endpoint, model, prompt, systemPrompt, temperature) {
+  async callLocalOpenAI(endpoint, model, prompt, systemPrompt, temperature) {
     const url = `${endpoint}/v1/chat/completions`;
 
     const requestBody = {
@@ -107,7 +122,186 @@ window.LLMApiClient = class LLMApiClient {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Local OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  /**
+   * Call remote OpenAI API
+   */
+  async callRemoteOpenAI(model, prompt, systemPrompt, temperature, apiKey) {
+    const url = 'https://api.openai.com/v1/chat/completions';
+
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required');
+    }
+
+    const requestBody = {
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        {
+          role: 'user',
+          content: `Please enhance the following prompt to make it more effective, clear, and specific:\n\n${prompt}`
+        }
+      ],
+      temperature: temperature,
+      max_tokens: 2000
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(this.defaultTimeout)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  /**
+   * Call Anthropic Claude API
+   */
+  async callAnthropic(model, prompt, systemPrompt, temperature, apiKey) {
+    const url = 'https://api.anthropic.com/v1/messages';
+
+    if (!apiKey) {
+      throw new Error('Anthropic API key is required');
+    }
+
+    const requestBody = {
+      model: model,
+      max_tokens: 2000,
+      temperature: temperature,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: `Please enhance the following prompt to make it more effective, clear, and specific:\n\n${prompt}`
+        }
+      ]
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(this.defaultTimeout)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Anthropic API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.content?.[0]?.text || '';
+  }
+
+  /**
+   * Call Google Gemini API
+   */
+  async callGemini(model, prompt, systemPrompt, temperature, apiKey) {
+    if (!apiKey) {
+      throw new Error('Google API key is required');
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `${systemPrompt}\n\nPlease enhance the following prompt to make it more effective, clear, and specific:\n\n${prompt}`
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: temperature,
+        maxOutputTokens: 2000
+      }
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(this.defaultTimeout)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Gemini API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+
+  /**
+   * Call OpenRouter API
+   */
+  async callOpenRouter(model, prompt, systemPrompt, temperature, apiKey) {
+    const url = 'https://openrouter.ai/api/v1/chat/completions';
+
+    if (!apiKey) {
+      throw new Error('OpenRouter API key is required');
+    }
+
+    const requestBody = {
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        {
+          role: 'user',
+          content: `Please enhance the following prompt to make it more effective, clear, and specific:\n\n${prompt}`
+        }
+      ],
+      temperature: temperature,
+      max_tokens: 2000
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://prompt-enhancer-extension',
+        'X-Title': 'Prompt Enhancer Pro'
+      },
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(this.defaultTimeout)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
@@ -117,23 +311,55 @@ window.LLMApiClient = class LLMApiClient {
   /**
    * Test connection to LLM endpoint
    */
-  async testConnection(endpoint, apiType = 'ollama') {
+  async testConnection(endpoint, apiType = 'ollama', provider = 'local', apiKey = '', model = '') {
     try {
-      let url;
-      if (apiType === 'ollama') {
-        url = `${endpoint}/api/tags`;
-      } else if (apiType === 'openai') {
-        url = `${endpoint}/v1/models`;
-      } else {
-        throw new Error('Unsupported API type');
+      if (provider === 'local') {
+        let url;
+        if (apiType === 'ollama') {
+          url = `${endpoint}/api/tags`;
+        } else if (apiType === 'openai') {
+          url = `${endpoint}/v1/models`;
+        } else {
+          throw new Error('Unsupported API type');
+        }
+
+        const response = await fetch(url, {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000)
+        });
+
+        return response.ok;
+      } else if (provider === 'openai') {
+        const response = await fetch('https://api.openai.com/v1/models', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          },
+          signal: AbortSignal.timeout(5000)
+        });
+        return response.ok;
+      } else if (provider === 'anthropic') {
+        // Anthropic doesn't have a simple health check endpoint, so we'll just validate the key format
+        return apiKey && apiKey.startsWith('sk-ant-');
+      } else if (provider === 'google') {
+        // Test with a simple request
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-pro'}?key=${apiKey}`, {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000)
+        });
+        return response.ok;
+      } else if (provider === 'openrouter') {
+        const response = await fetch('https://openrouter.ai/api/v1/models', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          },
+          signal: AbortSignal.timeout(5000)
+        });
+        return response.ok;
       }
 
-      const response = await fetch(url, {
-        method: 'GET',
-        signal: AbortSignal.timeout(5000)
-      });
-
-      return response.ok;
+      return false;
     } catch (error) {
       console.error('Connection test failed:', error);
       return false;
@@ -202,6 +428,8 @@ When enhancing a prompt, maintain the original intent but improve clarity, speci
         llmEndpoint: 'http://localhost:11434',
         llmModel: 'llama2',
         llmApiType: 'ollama',
+        llmProvider: 'local',
+        llmApiKey: '',
         llmTemperature: 0.7,
         llmEnabled: false
       }, (result) => {
@@ -209,6 +437,8 @@ When enhancing a prompt, maintain the original intent but improve clarity, speci
           endpoint: result.llmEndpoint,
           model: result.llmModel,
           apiType: result.llmApiType,
+          provider: result.llmProvider,
+          apiKey: result.llmApiKey,
           temperature: result.llmTemperature,
           enabled: result.llmEnabled
         });
@@ -225,6 +455,8 @@ When enhancing a prompt, maintain the original intent but improve clarity, speci
         llmEndpoint: settings.endpoint,
         llmModel: settings.model,
         llmApiType: settings.apiType,
+        llmProvider: settings.provider,
+        llmApiKey: settings.apiKey || '',
         llmTemperature: settings.temperature,
         llmEnabled: settings.enabled
       }, () => {
