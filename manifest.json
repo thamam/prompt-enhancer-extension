@@ -1,13 +1,21 @@
 {
   "manifest_version": 3,
   "name": "Prompt Enhancer Pro",
-  "version": "1.2.0",
-  "description": "Enhance prompts with security scanning and systematic prompt engineering guidelines",
+  "version": "1.4.0",
+  "description": "Enhance prompts with security scanning, local & remote LLM support, and systematic prompt engineering guidelines",
   "permissions": [
     "contextMenus",
     "activeTab",
     "scripting",
     "storage"
+  ],
+  "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://openrouter.ai/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -15,7 +23,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["security-scanner.js", "enhancer.js", "content.js"],
+      "js": ["security-scanner.js", "llm-api.js", "enhancer.js", "content.js"],
       "all_frames": true
     }
   ],

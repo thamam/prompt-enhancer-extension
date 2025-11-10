@@ -54,10 +54,15 @@ function enhanceAndReplace(text, mode) {
   performEnhancement(text, mode);
 }
 
-function performEnhancement(text, mode, isRedacted = false) {
+async function performEnhancement(text, mode, isRedacted = false) {
   try {
+    // Show loading notification for async operations
+    if (mode === 'local_llm') {
+      showNotification('🤖 Enhancing with LLM...', 'info');
+    }
+
     // Enhance the prompt
-    const enhancedText = enhancer.enhance(text, mode);
+    const enhancedText = await Promise.resolve(enhancer.enhance(text, mode));
 
     // Get the mode name for notification
     const modeName = getModeDisplayName(mode);
@@ -393,7 +398,8 @@ function getModeDisplayName(mode) {
     'gpt4_optimize': 'GPT-4 Optimization',
     'fix_antipatterns': 'Anti-Pattern Fixes',
     'add_structure': 'Structure Enhancement',
-    'evaluate_score': 'Evaluation & Scoring'
+    'evaluate_score': 'Evaluation & Scoring',
+    'local_llm': 'LLM'
   };
   return names[mode] || mode;
 }
