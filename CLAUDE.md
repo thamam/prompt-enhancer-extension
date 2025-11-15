@@ -4,41 +4,109 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Chrome Extension (Manifest V3) that enhances prompts using systematic prompt engineering principles. It provides context menu integration to transform selected text with various enhancement modes including interaction enforcement, platform optimization, anti-pattern fixing, quality evaluation, and local LLM-powered enhancement.
+This is a **dual-platform prompt enhancement tool** available as both a **Chrome Extension** (Manifest V3) and a **VS Code Extension**. It uses a **shared core architecture** to avoid code duplication, ensuring improvements to enhancement logic benefit both platforms automatically.
 
-## Architecture
+Key features: systematic prompt engineering principles, security scanning, local/remote LLM support, and multiple enhancement modes.
 
-### Core Components
+## Architecture (IMPORTANT - Shared Core Design)
 
-**PromptEnhancer** (`enhancer.js`): Central enhancement engine with 11 methods
+### Directory Structure
+
+```
+prompt-enhancer-extension/
+├── core/                          # 🔥 SHARED enhancement logic (platform-agnostic)
+│   ├── enhancer.js                # PromptEnhancer class
+│   ├── llm-api-client.js          # LLM API client
+│   ├── enhancement-modes.js       # Mode constants & display names
+│   ├── security-scanner.js        # Security scanning
+│   └── adapters/                  # Abstract adapter interfaces
+│       ├── storage-adapter.js     # Abstract storage interface
+│       └── notification-adapter.js # Abstract UI notifications
+│
+├── chrome/                        # Chrome Extension specific
+│   ├── manifest.json
+│   ├── background.js              # Service worker, context menus
+│   ├── content.js                 # DOM manipulation, text replacement
+│   ├── popup.html/js              # Extension popup UI
+│   ├── adapters/
+│   │   ├── chrome-storage.js      # Implements StorageAdapter for Chrome
+│   │   └── chrome-notifications.js # Implements NotificationAdapter for Chrome
+│   └── icons/
+│
+├── vscode/                        # VS Code Extension specific
+│   ├── package.json               # VS Code extension manifest
+│   ├── extension.js               # Main entry point, command registration
+│   ├── adapters/
+│   │   ├── vscode-storage.js      # Implements StorageAdapter for VS Code
+│   │   └── vscode-notifications.js # Implements NotificationAdapter for VS Code
+│   └── icon.png
+│
+└── [legacy files at root]         # For backward compatibility
+```
+
+### Core Components (Platform-Agnostic)
+
+**PromptEnhancer** (`core/enhancer.js`): Central enhancement engine
 - Mode enforcement: `enforceZeroShot()`, `enforceZeroShotRelaxed()`, `enforceInteractive()`
 - Platform optimization: `optimizeForClaude()`, `optimizeForGPT4()`
 - Quality improvements: `fixAntiPatterns()`, `addStructure()`
 - Analysis: `analyzePrompt()`, `evaluatePrompt()`
-- Local LLM: `enhanceWithLocalLLM()` - Async enhancement using local LLM API
+- LLM enhancement: `enhanceWithLocalLLM()` - Async enhancement using local/remote LLM
 - Entry point: `enhance(mode, prompt)` - Routes to appropriate enhancement method
+- **Dependency injection**: Accepts LLMApiClient via constructor
 
-**LLMApiClient** (`llm-api.js`): Client for local and remote LLM communication
+**LLMApiClient** (`core/llm-api-client.js`): Client for local and remote LLM communication
 - **Local LLMs**: Ollama, LM Studio, LocalAI
 - **Remote APIs**: OpenAI, Anthropic (Claude), Google (Gemini), OpenRouter
 - Connection testing and validation
-- Settings management via chrome.storage
-- API key secure storage for remote providers
-- Configurable endpoint, model, provider, and temperature
+- **Dependency injection**: Accepts StorageAdapter via constructor
+- Platform-agnostic fetch with timeout handling
 
-**Message Flow**:
-1. User right-clicks selected text → `background.js` creates context menu
-2. Menu selection triggers → `background.js` sends message to content script
-3. `content.js` receives message → calls `enhancer.enhance(mode, selectedText)`
-4. Enhanced text → `content.js` replaces selection in DOM
-5. Visual notification → confirms enhancement
+**Enhancement Modes** (`core/enhancement-modes.js`): Shared constants
+- `ENHANCEMENT_MODES`: Mode identifiers (zero_shot, interactive, etc.)
+- `MODE_DISPLAY_NAMES`: Human-readable names with emojis
+- Exported for both Node.js (VS Code) and browser (Chrome) environments
 
-**DOM Replacement Strategy** (`content.js`):
-- Maintains `currentSelection` and `currentRange` on mouseup
-- `replaceSelectedText()` handles multiple element types:
-  - Textareas/inputs: Direct value replacement
-  - ContentEditable: Range-based text node manipulation
-  - Fallback: Clipboard-based replacement
+### Adapter Pattern (Critical for Platform Abstraction)
+
+**Storage Adapter** (`core/adapters/storage-adapter.js`): Abstract interface for persistence
+- Methods: `get()`, `getMultiple()`, `set()`, `setMultiple()`
+- Chrome implementation: Uses `chrome.storage.local` API
+- VS Code implementation: Uses `vscode.workspace.getConfiguration()` API
+
+**Notification Adapter** (`core/adapters/notification-adapter.js`): Abstract interface for UI notifications
+- Methods: `showSuccess()`, `showError()`, `showInfo()`, `showWarning()`
+- Chrome implementation: Creates DOM elements with styled notifications
+- VS Code implementation: Uses `vscode.window.showInformationMessage()` API
+
+### Platform-Specific Implementations
+
+**Chrome Extension**:
+- **Message Flow**:
+  1. User right-clicks selected text → `background.js` creates context menu
+  2. Menu selection triggers → `background.js` sends message to content script
+  3. `content.js` receives message → instantiates core classes with Chrome adapters
+  4. Enhanced text → `content.js` replaces selection in DOM
+  5. Visual notification → confirms enhancement
+
+- **DOM Replacement Strategy** (`chrome/content.js`):
+  - Maintains `currentSelection` and `currentRange` on mouseup
+  - `replaceSelectedText()` handles multiple element types:
+    - Textareas/inputs: Direct value replacement
+    - ContentEditable: Range-based text node manipulation
+    - Fallback: Clipboard-based replacement
+
+**VS Code Extension**:
+- **Command Registration** (`vscode/extension.js`):
+  1. Extension activates → registers 11 commands
+  2. Commands registered with VS Code API
+  3. Keyboard shortcuts and context menu integration
+  4. Status bar item for quick access
+
+- **Text Replacement**:
+  - Uses `editor.edit()` API to replace selected text
+  - Atomic replacements ensure undo/redo works correctly
+  - Progress indicator for async LLM operations
 
 ### Enhancement Modes (10 total)
 
@@ -83,72 +151,109 @@ Users can customize shortcuts at `chrome://extensions/shortcuts`
 
 ## Development Commands
 
-### Icon Generation (Required for installation)
+### Chrome Extension
+
 ```bash
+# Generate icons (one-time setup)
 node generate-icons.js
+
+# Load extension for development
+# 1. Navigate to chrome://extensions/
+# 2. Enable "Developer mode"
+# 3. Click "Load unpacked"
+# 4. Select the chrome/ directory
+
+# After modifying code:
+# 1. Go to chrome://extensions/
+# 2. Click reload icon on "Prompt Enhancer Pro"
+# 3. Refresh any open tabs
+
+# Package for distribution
+cd chrome
+zip -r prompt-enhancer-pro-chrome.zip . -x "*.git*"
 ```
-Generates 16x16, 48x48, and 128x128 PNG icons in `icons/` directory. Must run before loading extension.
 
-### Load Extension for Development
-1. Generate icons (if not done): `node generate-icons.js`
-2. Navigate to `chrome://extensions/`
-3. Enable "Developer mode" (top-right toggle)
-4. Click "Load unpacked"
-5. Select this directory
+### VS Code Extension
 
-### Testing Changes
-After modifying code:
-1. Go to `chrome://extensions/`
-2. Click reload icon on "Prompt Enhancer Pro"
-3. Refresh any open tabs where you want to test
-4. Select text and test via right-click menu
-
-### Package for Distribution
 ```bash
-zip -r prompt-enhancer-pro.zip . -x "*.git*" -x "node_modules/*" -x "generate-icons.js"
+cd vscode
+
+# Install dependencies (optional, for development)
+npm install
+
+# Run extension in development mode
+# Press F5 in VS Code (opens Extension Development Host)
+
+# Package extension
+npx vsce package
+
+# Install packaged extension
+# Extensions view → "..." menu → "Install from VSIX..."
 ```
 
-## Code Patterns
+## Code Patterns (CRITICAL - Shared Core Approach)
 
-### Adding New Enhancement Mode
+### Adding New Enhancement Mode (Benefits BOTH Platforms)
 
-1. **Add mode constant** to `ENHANCEMENT_MODES` (background.js:3-13)
-2. **Create enhancement method** in `PromptEnhancer` class (enhancer.js)
-3. **Add case** to `enhance()` switch statement (enhancer.js:350-371)
-4. **Add context menu item** in background.js chrome.runtime.onInstalled listener
-5. **Update mode display name** in content.js `getModeDisplayName()` if needed
+**This is the recommended approach - changes automatically benefit both Chrome and VS Code:**
 
-### Content Script Communication
-Messages from background.js follow this schema:
+1. **Add mode constant** to `core/enhancement-modes.js`:
+   ```javascript
+   ENHANCEMENT_MODES.MY_NEW_MODE = 'my_new_mode';
+   MODE_DISPLAY_NAMES['my_new_mode'] = '✨ My New Mode';
+   ```
+
+2. **Create enhancement method** in `core/enhancer.js`:
+   ```javascript
+   myNewMode(prompt) {
+     // Enhancement logic here
+     return enhancedPrompt;
+   }
+   ```
+
+3. **Add case** to `enhance()` switch statement in `core/enhancer.js`:
+   ```javascript
+   case 'my_new_mode':
+     return this.myNewMode(text);
+   ```
+
+4. **Add platform-specific UI**:
+   - Chrome: Add context menu item in `chrome/background.js`
+   - VS Code: Add command in `vscode/package.json` and register in `vscode/extension.js`
+
+5. **Test on BOTH platforms** to ensure consistency
+
+### Modifying Core Logic (Benefits BOTH Platforms)
+
+**Always modify `core/` files, never duplicate logic in platform-specific files!**
+
+- Edit `core/enhancer.js` for enhancement algorithm changes
+- Edit `core/llm-api-client.js` for LLM client changes
+- Edit `core/enhancement-modes.js` for mode definitions
+
+### Adding Platform-Specific Features
+
+**Only when feature is truly platform-specific (e.g., Chrome-only security modal):**
+
+- Chrome: Modify `chrome/content.js`, `chrome/background.js`, or `chrome/popup.js`
+- VS Code: Modify `vscode/extension.js`
+
+### Adapter Pattern Usage
+
+When core code needs storage or notifications:
+
 ```javascript
-{
-  action: "enhance",
-  mode: ENHANCEMENT_MODES.*,
-  text: selectedText
-}
-```
+// In core/ code - use adapter methods
+await storageAdapter.get('key', defaultValue);
+await notificationAdapter.showSuccess('Message');
 
-### DOM Manipulation Safety
-Always check element type before replacement:
-- Use `element.value` for input/textarea
-- Use `document.execCommand()` or Range API for contentEditable
-- Fallback to clipboard operations for unknown types
+// In platform code - instantiate correct adapter
+const storageAdapter = new ChromeStorageAdapter(); // or VSCodeStorageAdapter
+const notificationAdapter = new ChromeNotificationAdapter(); // or VSCodeNotificationAdapter
 
-## File Structure
-
-```
-prompt-enhancer-extension/
-├── manifest.json          # Extension manifest (V3)
-├── background.js          # Service worker: context menu coordination
-├── content.js            # Content script: text selection & DOM replacement
-├── enhancer.js           # PromptEnhancer class: core enhancement logic
-├── llm-api.js            # LLMApiClient class: local LLM communication
-├── security-scanner.js   # Security scanning for sensitive data
-├── popup.html            # Extension popup UI
-├── popup.js              # Popup statistics, LLM settings & interactions
-├── generate-icons.js     # Icon generation utility (Node.js)
-├── icons/                # Generated extension icons
-└── README.md            # User documentation
+// Inject into core classes
+const llmClient = new LLMApiClient(storageAdapter);
+const enhancer = new PromptEnhancer(llmClient);
 ```
 
 ## Manifest V3 Considerations

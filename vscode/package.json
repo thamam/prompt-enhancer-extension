@@ -1,0 +1,237 @@
+{
+  "name": "prompt-enhancer-pro",
+  "displayName": "Prompt Enhancer Pro",
+  "description": "Enhance prompts with systematic prompt engineering guidelines, security scanning, and local/remote LLM support",
+  "version": "1.4.0",
+  "publisher": "prompt-enhancer",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning",
+    "Snippets"
+  ],
+  "keywords": [
+    "prompt",
+    "ai",
+    "llm",
+    "chatgpt",
+    "claude",
+    "prompt engineering"
+  ],
+  "activationEvents": [
+    "onCommand:promptEnhancer.enhanceZeroShot",
+    "onCommand:promptEnhancer.enhanceZeroShotRelaxed",
+    "onCommand:promptEnhancer.enhanceInteractive",
+    "onCommand:promptEnhancer.optimizeClaude",
+    "onCommand:promptEnhancer.optimizeGPT4",
+    "onCommand:promptEnhancer.fixAntiPatterns",
+    "onCommand:promptEnhancer.addStructure",
+    "onCommand:promptEnhancer.evaluateScore",
+    "onCommand:promptEnhancer.enhanceWithLLM",
+    "onCommand:promptEnhancer.quickEnhance",
+    "onCommand:promptEnhancer.configureLLM"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "promptEnhancer.enhanceZeroShot",
+        "title": "Prompt Enhance: 🎯 Zero Shot (No Questions)"
+      },
+      {
+        "command": "promptEnhancer.enhanceZeroShotRelaxed",
+        "title": "Prompt Enhance: 🎯 Zero Shot Relaxed (1 Question OK)"
+      },
+      {
+        "command": "promptEnhancer.enhanceInteractive",
+        "title": "Prompt Enhance: 💬 Interactive (Step-by-Step)"
+      },
+      {
+        "command": "promptEnhancer.optimizeClaude",
+        "title": "Prompt Enhance: 🤖 Optimize for Claude"
+      },
+      {
+        "command": "promptEnhancer.optimizeGPT4",
+        "title": "Prompt Enhance: 🧠 Optimize for GPT-4"
+      },
+      {
+        "command": "promptEnhancer.fixAntiPatterns",
+        "title": "Prompt Enhance: 🔧 Fix Anti-Patterns"
+      },
+      {
+        "command": "promptEnhancer.addStructure",
+        "title": "Prompt Enhance: 📋 Add Structure & Format"
+      },
+      {
+        "command": "promptEnhancer.evaluateScore",
+        "title": "Prompt Enhance: 📊 Evaluate & Score"
+      },
+      {
+        "command": "promptEnhancer.enhanceWithLLM",
+        "title": "Prompt Enhance: 🤖 Enhance with LLM"
+      },
+      {
+        "command": "promptEnhancer.quickEnhance",
+        "title": "Prompt Enhance: ⚡ Quick Enhance (Last Used)"
+      },
+      {
+        "command": "promptEnhancer.configureLLM",
+        "title": "Prompt Enhance: ⚙️ Configure LLM Settings"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "promptEnhancer.quickEnhance",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "promptEnhancer.enhanceZeroShot",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z",
+        "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "promptEnhancer.enhanceInteractive",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "promptEnhancer.optimizeClaude",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "promptEnhancer.submenu",
+          "group": "promptEnhancer",
+          "when": "editorHasSelection"
+        }
+      ],
+      "promptEnhancer.submenu": [
+        {
+          "command": "promptEnhancer.quickEnhance",
+          "group": "1_main"
+        },
+        {
+          "command": "promptEnhancer.enhanceZeroShot",
+          "group": "2_modes"
+        },
+        {
+          "command": "promptEnhancer.enhanceZeroShotRelaxed",
+          "group": "2_modes"
+        },
+        {
+          "command": "promptEnhancer.enhanceInteractive",
+          "group": "2_modes"
+        },
+        {
+          "command": "promptEnhancer.optimizeClaude",
+          "group": "3_platforms"
+        },
+        {
+          "command": "promptEnhancer.optimizeGPT4",
+          "group": "3_platforms"
+        },
+        {
+          "command": "promptEnhancer.fixAntiPatterns",
+          "group": "4_fixes"
+        },
+        {
+          "command": "promptEnhancer.addStructure",
+          "group": "4_fixes"
+        },
+        {
+          "command": "promptEnhancer.evaluateScore",
+          "group": "5_advanced"
+        },
+        {
+          "command": "promptEnhancer.enhanceWithLLM",
+          "group": "5_advanced"
+        },
+        {
+          "command": "promptEnhancer.configureLLM",
+          "group": "6_settings"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "promptEnhancer.submenu",
+        "label": "Prompt Enhance"
+      }
+    ],
+    "configuration": {
+      "title": "Prompt Enhancer Pro",
+      "properties": {
+        "promptEnhancer.llm.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable LLM-powered prompt enhancement"
+        },
+        "promptEnhancer.llm.provider": {
+          "type": "string",
+          "enum": ["local", "openai", "anthropic", "google", "openrouter"],
+          "default": "local",
+          "description": "LLM provider (local, openai, anthropic, google, openrouter)"
+        },
+        "promptEnhancer.llm.apiType": {
+          "type": "string",
+          "enum": ["ollama", "openai"],
+          "default": "ollama",
+          "description": "Local API type (ollama or openai-compatible)"
+        },
+        "promptEnhancer.llm.endpoint": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Local LLM endpoint URL"
+        },
+        "promptEnhancer.llm.model": {
+          "type": "string",
+          "default": "llama2",
+          "description": "LLM model name"
+        },
+        "promptEnhancer.llm.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for remote LLM providers (stored securely)"
+        },
+        "promptEnhancer.llm.temperature": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "LLM temperature (0-2)"
+        },
+        "promptEnhancer.lastUsedMode": {
+          "type": "string",
+          "default": "fix_antipatterns",
+          "description": "Last used enhancement mode for quick enhance"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "^18.x",
+    "eslint": "^8.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thamam/prompt-enhancer-extension"
+  },
+  "license": "MIT"
+}

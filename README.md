@@ -1,6 +1,13 @@
-# Prompt Enhancer Pro - Chrome Extension
+# Prompt Enhancer Pro
 
-A Chrome extension that enhances prompts following systematic prompt engineering guidelines from your Prompt Engineering Project.
+A powerful prompt enhancement tool available as both a **Chrome Extension** and **VS Code Extension**, featuring systematic prompt engineering guidelines, security scanning, and local/remote LLM support.
+
+## 🚀 Available Platforms
+
+- **Chrome Extension**: Right-click enhancement in any web browser
+- **VS Code Extension**: Integrated prompt enhancement within your code editor
+
+Both extensions share the same core enhancement logic, ensuring consistent results across platforms!
 
 ## Features
 
@@ -34,69 +41,87 @@ A Chrome extension that enhances prompts following systematic prompt engineering
 - **Financial**: Credit cards (with Luhn validation), bank account numbers
 - **Private Keys**: RSA, EC, SSH, OpenSSH private keys
 
-## Installation
+## 🏗️ Architecture
 
-### Method 1: Load Unpacked Extension (Development)
+This project uses a **shared core architecture** to avoid code duplication:
 
-1. **Generate Icons** (one-time setup):
-   ```bash
-   cd prompt-enhancer-extension
-   node generate-icons.js
-   ```
-
-2. **Open Chrome Extensions Page**:
-   - Navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top-right)
-
-3. **Load Extension**:
-   - Click "Load unpacked"
-   - Select the `prompt-enhancer-extension` directory
-   - Extension should now appear in your toolbar
-
-### Method 2: Build and Package (Production)
-
-```bash
-cd prompt-enhancer-extension
-# Icons should already exist from Method 1
-# Zip the entire directory
-zip -r prompt-enhancer-pro.zip . -x "*.git*" -x "node_modules/*" -x "generate-icons.js"
+```
+prompt-enhancer-extension/
+├── core/                    # Shared enhancement logic (platform-agnostic)
+│   ├── enhancer.js          # PromptEnhancer class
+│   ├── llm-api-client.js    # LLM API client
+│   ├── enhancement-modes.js # Mode constants
+│   └── adapters/            # Abstract interfaces
+│
+├── chrome/                  # Chrome Extension
+│   ├── manifest.json
+│   ├── background.js
+│   ├── content.js
+│   └── adapters/            # Chrome-specific implementations
+│
+└── vscode/                  # VS Code Extension
+    ├── package.json
+    ├── extension.js
+    └── adapters/            # VS Code-specific implementations
 ```
 
-Then load the .zip file in Chrome Extensions.
+**Benefits:**
+- ✅ Zero code duplication
+- ✅ Single source of truth for enhancement logic
+- ✅ Improvements benefit both platforms automatically
+- ✅ Consistent behavior across Chrome and VS Code
+
+## Installation
+
+### Chrome Extension
+
+See [chrome/README.md](chrome/README.md) for detailed Chrome installation instructions.
+
+**Quick Start:**
+1. Generate icons: `node generate-icons.js`
+2. Go to `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked"
+5. Select the `chrome/` directory
+
+### VS Code Extension
+
+See [vscode/README.md](vscode/README.md) for detailed VS Code installation instructions.
+
+**Quick Start:**
+1. Open the `vscode/` directory in VS Code
+2. Press `F5` to launch in Extension Development Host
+3. Or package with: `cd vscode && npx vsce package`
+4. Install the generated `.vsix` file
 
 ## Usage
 
-1. **Select Text**: Highlight any text on a webpage that you want to enhance
+### Chrome Extension
 
-2. **Right-Click**: Open the context menu
+1. **Select Text**: Highlight any text on a webpage
+2. **Right-Click**: Open the context menu → "Prompt Enhance"
+3. **Choose Enhancement**: Select your desired mode
+4. **Security Scan**: Automatic scanning for sensitive information
+5. **Text Replaced**: Enhanced version replaces selection
 
-3. **Choose Enhancement**:
-   ```
-   Prompt Enhance →
-     ├── Enforce Mode →
-     │   ├── 🎯 Zero Shot (No Questions)
-     │   ├── 🎯 Zero Shot Relaxed (1 Question OK)
-     │   └── 💬 Interactive (Step-by-Step)
-     │
-     ├── Optimize for Platform →
-     │   ├── 🤖 Optimize for Claude
-     │   └── 🧠 Optimize for GPT-4
-     │
-     ├── Quick Fixes →
-     │   ├── 🔧 Fix Anti-Patterns
-     │   └── 📋 Add Structure & Format
-     │
-     └── 📊 Evaluate & Score
-   ```
+**Keyboard Shortcuts** (v1.1+):
+- `Ctrl+Shift+E` / `Cmd+Shift+E`: Quick enhance with last used mode
+- `Ctrl+Shift+Z` / `Cmd+Shift+Z`: Zero Shot mode
+- `Ctrl+Shift+I` / `Cmd+Shift+I`: Interactive mode
+- `Ctrl+Shift+C` / `Cmd+Shift+C`: Claude optimization
 
-4. **Security Scan**: Before enhancement, the extension automatically scans for sensitive information:
-   - **Critical/High Issues**: Security warning modal appears with options to Cancel, Redact & Proceed, or Proceed Anyway
-   - **Medium/Low Issues**: Warning notification appears, enhancement proceeds automatically
-   - **No Issues**: Enhancement proceeds normally
+### VS Code Extension
 
-5. **Text Replaced**: The selected text is automatically replaced with the enhanced version
+1. **Select Text**: Highlight text in any editor
+2. **Use Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P`) → "Prompt Enhance"
+3. **Or Use Keyboard Shortcuts**:
+   - Same shortcuts as Chrome extension
+4. **Or Right-Click**: Context menu → "Prompt Enhance"
+5. **Or Status Bar**: Click "✨ Prompt Enhance" button
 
-6. **Visual Feedback**: A notification appears confirming the enhancement
+See platform-specific READMEs for detailed usage instructions:
+- [Chrome Usage](chrome/README.md#usage)
+- [VS Code Usage](vscode/README.md#usage)
 
 ## Security Scanner in Action
 
