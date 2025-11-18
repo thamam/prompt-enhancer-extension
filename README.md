@@ -27,6 +27,12 @@ Both extensions share the same core enhancement logic, ensuring consistent resul
 ### 📊 Evaluation
 - **Evaluate & Score**: Analyzes prompt quality across 4 dimensions (Clarity, Specificity, Completeness, Efficiency)
 
+### 🤖 AI-Powered Enhancement **NEW in v1.3.0**
+- **Local LLMs**: Ollama, LM Studio, LocalAI (free, private, no API key needed)
+- **Remote APIs**: OpenAI (GPT-4), Anthropic (Claude), Google (Gemini), OpenRouter
+- **Smart Enhancement**: Uses state-of-the-art language models to intelligently improve prompts
+- **Flexible Configuration**: Works with both platforms - Chrome and VS Code
+
 ### 🛡️ Security Scanner **NEW in v1.2**
 - **Automatic Detection**: Scans prompts for sensitive information before enhancement
 - **Comprehensive Patterns**: Detects API keys, passwords, PII, credit cards, database connections, private keys
@@ -94,6 +100,27 @@ See [vscode/README.md](vscode/README.md) for detailed VS Code installation instr
 3. Or package with: `cd vscode && npx vsce package`
 4. Install the generated `.vsix` file
 
+### LLM Configuration (Optional but Powerful!)
+
+**Both extensions support AI-powered prompt enhancement** using local or remote LLMs:
+
+#### Option 1: Local LLMs (Free, Private, Offline)
+- **Ollama**: `http://localhost:11434` (recommended for privacy)
+- **LM Studio**: OpenAI-compatible local server
+- **LocalAI**: Self-hosted AI models
+- **No API key required** - runs entirely on your machine
+
+#### Option 2: Remote APIs (Requires API Key)
+- **OpenAI** (`sk-...`): GPT-4, GPT-4-turbo, GPT-3.5-turbo
+- **Anthropic** (`sk-ant-...`): Claude 3 Opus, Sonnet, Haiku
+- **Google**: Gemini Pro, Gemini 1.5 Pro
+- **OpenRouter**: Unified access to multiple providers
+
+**Chrome**: Click extension icon → Enable LLM → Configure provider & API key → Test & Save
+**VS Code**: Settings → "Prompt Enhancer" → Configure `llm.provider`, `llm.apiKey`, `llm.model`
+
+📖 **See [INSTALL.md](INSTALL.md) for detailed configuration with examples and API key formats**
+
 ## Usage
 
 ### Chrome Extension
@@ -118,6 +145,14 @@ See [vscode/README.md](vscode/README.md) for detailed VS Code installation instr
    - Same shortcuts as Chrome extension
 4. **Or Right-Click**: Context menu → "Prompt Enhance"
 5. **Or Status Bar**: Click "✨ Prompt Enhance" button
+
+### Using LLM Enhancement
+
+Once configured, select text and choose **"🤖 Enhance with LLM"** from:
+- **Chrome**: Right-click → "Prompt Enhance" → "Enhance with LLM"
+- **VS Code**: Command Palette → "Prompt Enhance: Enhance with LLM"
+
+The AI will analyze your prompt and enhance it with better structure, clarity, and specificity!
 
 See platform-specific READMEs for detailed usage instructions:
 - [Chrome Usage](chrome/README.md#usage)
@@ -320,6 +355,37 @@ View enhancement statistics by clicking the extension icon:
 - Available enhancement modes
 - Usage instructions
 
+## API Key Security & Privacy
+
+### How API Keys Are Handled
+
+**Chrome Extension:**
+- API keys are stored locally in Chrome's `chrome.storage.local` API
+- Keys are **never transmitted** to any server except the LLM provider you configure
+- Keys remain encrypted in your browser's local storage
+- You can clear keys anytime by disabling LLM enhancement or resetting settings
+
+**VS Code Extension:**
+- API keys are stored in VS Code's workspace/user settings
+- Keys are stored in your local VS Code configuration files
+- Keys are **only sent** to the LLM provider you explicitly configure
+- You can remove keys by editing VS Code settings
+
+### Privacy Best Practices
+
+1. **Use Local LLMs** for sensitive prompts (Ollama runs entirely on your machine)
+2. **Rotate API keys** periodically if using remote providers
+3. **Review costs** - Remote APIs may charge per request
+4. **Test with non-sensitive data** first to ensure everything works correctly
+5. **Check provider terms** - Each LLM provider has different data retention policies
+
+### API Key Formats
+
+- **OpenAI**: Starts with `sk-` (e.g., `sk-proj-abc123...`)
+- **Anthropic**: Starts with `sk-ant-` (e.g., `sk-ant-api03-abc123...`)
+- **Google**: Google AI API key (no specific prefix)
+- **OpenRouter**: Standard API key format
+
 ## Troubleshooting
 
 ### Text Not Replacing
@@ -335,6 +401,25 @@ View enhancement statistics by clicking the extension icon:
 ### Notification Not Showing
 - Check browser notification permissions
 - Some sites may block notifications
+
+### LLM Enhancement Not Working
+
+**Local LLM Issues:**
+- Ensure your LLM server is running (e.g., `ollama serve`)
+- Verify the endpoint URL is accessible (test with `curl http://localhost:11434/api/tags`)
+- Check firewall settings allow local connections
+- Ensure the model is downloaded (e.g., `ollama pull llama2`)
+
+**Remote API Issues:**
+- Verify API key is correct (check for typos, extra spaces)
+- Ensure API key has valid credits/quota remaining
+- Test connection using the "Test Connection" button (Chrome) or check VS Code output panel
+- Check API key permissions with your provider
+- Review network connection (APIs require internet access)
+- Common errors:
+  - `401 Unauthorized`: Invalid API key
+  - `429 Too Many Requests`: Rate limit exceeded
+  - `402 Payment Required`: Insufficient credits
 
 ## Based On
 

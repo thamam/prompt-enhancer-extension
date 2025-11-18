@@ -30,12 +30,20 @@ Or:
 
 ## After Installation
 
+### Chrome Extension
+
 1. Open Chrome and go to: `chrome://extensions/`
 2. Enable "Developer mode" (toggle in top-right)
 3. Click "Load unpacked"
-4. Navigate to the installation directory
-5. Select the directory
-6. Extension is now loaded!
+4. Navigate to the installation directory and select the `chrome/` subdirectory
+5. Extension is now loaded!
+
+### VS Code Extension
+
+1. Open the `vscode/` directory in VS Code
+2. Press `F5` to launch in Extension Development Host
+3. Or package with: `cd vscode && npx vsce package`
+4. Install the generated `.vsix` file via Extensions view → "..." menu → "Install from VSIX..."
 
 ## Updating the Extension
 
@@ -59,12 +67,47 @@ The install script copies:
 - `icons/` - Extension icons
 - Documentation files (README.md, etc.)
 
+## Configuring LLM Enhancement (Optional but Recommended)
+
+Both Chrome and VS Code extensions support AI-powered prompt enhancement using:
+- **Local LLMs**: Ollama, LM Studio, LocalAI (free, private, offline)
+- **Remote APIs**: OpenAI, Anthropic/Claude, Google/Gemini, OpenRouter (requires API key)
+
+### Chrome Extension Setup
+
+1. Click the extension icon in Chrome toolbar
+2. Enable "Enable LLM Enhancement"
+3. Select provider and configure:
+   - **Local**: No API key needed - just endpoint URL and model name
+   - **Remote**: Enter your API key (e.g., `sk-...` for OpenAI, `sk-ant-...` for Claude)
+4. Click "Test Connection" to verify
+5. Click "Save Settings"
+
+### VS Code Extension Setup
+
+1. Open Settings: File → Preferences → Settings
+2. Search for "Prompt Enhancer"
+3. Configure:
+   - `promptEnhancer.llm.enabled`: true
+   - `promptEnhancer.llm.provider`: "local", "openai", "anthropic", "google", or "openrouter"
+   - `promptEnhancer.llm.apiKey`: Your API key (for remote providers)
+   - `promptEnhancer.llm.model`: Model name (e.g., "gpt-4", "claude-3-opus-20240229")
+
+**See INSTALL.md for detailed LLM configuration examples and model names.**
+
 ## Troubleshooting
 
 If the extension doesn't load:
 - Check the installation directory path is correct
 - Ensure all files were copied successfully
-- See `TROUBLESHOOTING.md` for common issues
+- For Chrome: Make sure to select the `chrome/` subdirectory, not the root
+- For VS Code: Open the `vscode/` subdirectory
+
+If LLM enhancement isn't working:
+- Local: Ensure your LLM server (Ollama, LM Studio) is running
+- Remote: Verify your API key is valid and has credits/quota
+- Click "Test Connection" in Chrome popup to diagnose issues
+- See `INSTALL.md` for detailed LLM troubleshooting
 
 ## Development Workflow
 
